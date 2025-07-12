@@ -62,8 +62,10 @@ There are also some experimental nodes, some nodes to edit messages and a lot of
 
 ## Installation
 
+If you're using ComfyUI Manager for installation, you can skip the first step.
+
 ### Step 1:
-Open a terminal in you *ComfyUI* directory.  
+Open a terminal in your *ComfyUI* directory.  
 > **⚠️ Make sure your ComfyUI virtual environment is activated**!
 
 ```sh
