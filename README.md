@@ -6,6 +6,7 @@
 
 ## Nodes
 
+The main nodes:  
 <img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/main_nodes.png" alt="main_nodes">
 
 <details><summary>Telegram Bot
@@ -36,18 +37,28 @@ If `send_as_file` is True, the image(s) will be sent as file(s).
 
 <details><summary>Send Video
 </summary>
-This Node is to send a video. 
+This Node is to send a video.  
+
+The `video` input expects the `Filenames` outupt of the `Video Combine` node (Video Helper Suite) as input.
+
+The video can be sent as video, animation or file.
 </details>
 
 <details><summary>Send Audio
 </summary>
 This Node is to send an audio. 
+
+The audio can be sent as audio, voice, or file. 
 </details>
 
 <details><summary>Send Chat Action
 </summary>
-This Node is to send chat actions. 
+This Node is to send chat actions.
+
+Note: This is **no output node**.
 </details>
+
+There are also some experimental nodes, some nodes to edit messages and a lot of converter nodes (see [Triggers](#triggers)).
 
 ## Installation
 
@@ -93,11 +104,14 @@ Have fun!
 
 The optional `trigger` inputs and outputs are there to force things to happen in the order you want. 
 
+ComfyUI works by looking for output nodes and executes backwards to ensure all input nodes have executed (and so forth). I like to imagine that node inputs kind of "pull" the needed value out of the connected output. Traversing from end to start. The trigger passthrough ensures the node to be executed in a specific point during the workflow execution proccess.
+
 Here is an Example of a F5-TTS workflow sending the Chat Action *recoring_voice* to the chat, before the TTS Node starts to generate ("record") the audio. After the F5-TTS node is done, the Audio will be sent to the chat. 
 
 <img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/trigger_example_tts.png" alt="trigger_example_tts">
 
-You can use almost any type as Trigger. The downside is that the signal must be converted to `ANY` before going into the `trigger` input and back to the original type after coming out from the `trigger` output (See example above using an `INT` signal as trigger - the seed).  
-*I know this is a little bit clunky but I could not figure out another way to enforce kepping things in sync.*  
-This is why there are so many nodes in the `converter` category.
+> The seed is required by the F5-TTS node, so the `Send Chat Action` node **must** be executed first. 
 
+You can use almost any type as Trigger. The downside is that the signal must be converted to `ANY` before going into the `trigger` input and back to the original type after coming out from the `trigger` output (See example above using an `INT` signal as trigger - the seed).  
+*I know this is a little bit clunky but I could not figure out another way to enforce kepping things in sync. ComfyUI typecking is very strict.*  
+This is why there are so many nodes in the `converter` category.

@@ -15,7 +15,7 @@ UINT64_MAX = 9223372036854775807
 
 USER_DIR = Path(os.getcwd()) / "user" / "default"
 
-_CATEGORY = "Telegram Suite 🔽/utils"
+_CATEGORY = "Telegram Suite 🔽/experimental"
 
 class Config(TypedDict):
     bots: dict[str, str]
