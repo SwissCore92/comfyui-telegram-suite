@@ -2,8 +2,6 @@
 
 **Implement Telegram into your ComfyUI workflows.**
 
-> Requires `ffmpeg`!
-
 ## Nodes
 
 The main nodes:  
@@ -62,9 +60,12 @@ There are also some experimental nodes, some nodes to edit messages and a lot of
 
 ## Installation
 
-If you're using ComfyUI Manager for installation, you can skip the first step.
+> **Note:** Requires `ffmpeg`!
 
 ### Step 1:
+
+Skip this step if you installed `ComfyUI Telegram Suite` via `ComfyUI Manager`.
+
 Open a terminal in your *ComfyUI* directory.  
 > **⚠️ Make sure your ComfyUI virtual environment is activated**!
 
@@ -79,11 +80,12 @@ pip install -r requirements.txt
 Restart ComfyUI
 
 ### Step 3: 
-Go to `ComfyUI/user/default/telegram-suite`.  
-There should be a `config.json` file.  
-Add your bot(s) token(s) to `"bots"`.
-Add your chat id(s) to `"chats"`.
-eg.
+Add your bot(s) and chat(s) to the config file. 
+* Go to `ComfyUI/user/default/telegram-suite`.  
+* There should be a `config.json` file.  
+* Add your bot(s) token(s) to `"bots"`.  
+* Add your chat id(s) to `"chats"`.  
+The file should look something like this:
 ```python
 {
     "bots": {
@@ -98,9 +100,7 @@ eg.
 ```
 
 ### Step 4:
-Restart ComfyUI again.  
-
-Have fun!
+Restart ComfyUI again. -> Have fun!
 
 ## Triggers
 
