@@ -488,7 +488,7 @@ class EditMessageAudio(SendGeneric):
                 "caption": ("STRING", {"multiline": True, "default": ""}),
                 "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
                 "show_caption_above_media": ("BOOLEAN", {"default": False}),
-                "file_name": ("STRING", {"default": "image"}),
+                "file_name": ("STRING", {"default": "audio"}),
                 "as_file": ("BOOLEAN", {"default": False}),
             },
             "optional": {
