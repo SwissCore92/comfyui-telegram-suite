@@ -40,7 +40,7 @@ class TelegramBot:
 
     def init_telegram_bot(self, bot: str, chat=None):
         token = config["bots"][bot]
-        
+
         self.session = httpx.Client(
             base_url=f"https://api.telegram.org/bot{token}/",
         )
@@ -53,7 +53,7 @@ class TelegramBot:
             if isinstance(v, (dict, list)) else v 
             for k, v in params.items()
             if v # is not None
-        }
+        } if params else None
 
         result = self.session.post(method_name, data=params or None, files=files or None).json()
 
@@ -78,6 +78,7 @@ class APIMethod:
                 "method_name": ("STRING", {"default": "sendMessage"}),
             },
             "optional": {
+                "chat_id": ("INT", {"forceInput": True}),
                 "params": ("DICT", {"default": {}})
             }
         }
@@ -86,9 +87,11 @@ class APIMethod:
     RETURN_NAMES = ("RESULT *",)
 
     FUNCTION = "call_api_method"
-    CATEGORY = _CATEGORY
+    CATEGORY = f"{_CATEGORY}/experimental"
 
-    def call_api_method(self, bot: TelegramBot, method_name, params=None):
+    def call_api_method(self, bot: TelegramBot, method_name, chat_id=None, params=None):
+        params = params if params else {}
+        params["chat_id"] = chat_id
         return (bot(method_name, params=params),)
 
 
