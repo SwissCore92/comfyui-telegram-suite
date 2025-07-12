@@ -5,7 +5,7 @@
 ## Nodes
 
 The main nodes:  
-<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/main_nodes.png" alt="main_nodes">
+<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/main_nodes.png" alt="screenshots/main_nodes.png">
 
 <details><summary>Telegram Bot
 </summary>
@@ -64,13 +64,11 @@ There are also some experimental nodes, some nodes to edit messages and a lot of
 
 ### Step 1:
 
-Skip this step if you installed `ComfyUI Telegram Suite` via `ComfyUI Manager`.
+Install via `ComfyUI Manager` (and skip **Step 1**) or execute the following commands:
 
-Open a terminal in your *ComfyUI* directory.  
-> **⚠️ Make sure your ComfyUI virtual environment is activated**!
+>⚠️ Make sure your ComfyUI virtual environment is activated and you are in the ComfyUI/custom_nodes directory!
 
 ```sh
-cd custom_nodes
 git clone https://github.com/SwissCore92/comfyui-telegram-suite.git
 cd comfyui-telegram-suite
 pip install -r requirements.txt
@@ -81,10 +79,11 @@ Restart ComfyUI
 
 ### Step 3: 
 Add your bot(s) and chat(s) to the config file. 
-* Go to `ComfyUI/user/default/telegram-suite`.  
-* There should be a `config.json` file.  
-* Add your bot(s) token(s) to `"bots"`.  
+
+* Open the `ComfyUI/user/default/telegram-suite/config.json` file.  
+* Add your bot token(s) to `"bots"`.  
 * Add your chat id(s) to `"chats"`.  
+
 The file should look something like this:
 ```python
 {
@@ -98,6 +97,8 @@ The file should look something like this:
     }
 }
 ```
+> You can use any String as key value for both "bots" and "chats".  
+Just use a name you can recognize. I like to use the telegram `username`.
 
 ### Step 4:
 Restart ComfyUI again. -> Have fun!
@@ -110,7 +111,7 @@ ComfyUI works by looking for output nodes and executes backwards to ensure all i
 
 Here is an Example of a F5-TTS workflow sending the Chat Action *recoring_voice* to the chat, before the TTS Node starts to generate ("record") the audio. After the F5-TTS node is done, the Audio will be sent to the chat. 
 
-<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/trigger_example_tts.png" alt="trigger_example_tts">
+<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/trigger_example_tts.png" alt="screenshots/trigger_example_tts.png">
 
 > The seed is required by the F5-TTS node, so the `Send Chat Action` node **must** be executed first. 
 
