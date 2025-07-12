@@ -1,6 +1,6 @@
 # ComfyUI Telegram Suite
 
-**Implement Telegram into your workflow.**
+**Implement Telegram into your ComfyUI workflows.**
 
 > Requires `ffmpeg`!
 
@@ -45,6 +45,9 @@ Test
 Test
 </details>
 
+>**Note:**  
+>The optional `trigger` inputs and outputs are there to force things to happen in the order you want.  
+
 
 ## Installation
 
@@ -68,7 +71,7 @@ There should be a `config.json` file.
 Add your bot(s) token(s) to `"bots"`.
 Add your chat id(s) to `"chats"`.
 eg.
-```json
+```python
 {
     "bots": {
         "MyCoolBot": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
@@ -86,4 +89,5 @@ Restart ComfyUI again.
 
 Have fun!
 
----
+## Triggers
+<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/trigger_example_tts.png">
