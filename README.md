@@ -117,3 +117,9 @@ Here is an Example of a F5-TTS workflow sending the Chat Action *recoring_voice*
 You can use almost any type as Trigger. The downside is that the signal must be converted to `ANY` before going into the `trigger` input and back to the original type after coming out from the `trigger` output (See example above using an `INT` signal as trigger - the seed).  
 *I know this is a little bit clunky but I could not figure out another way to enforce kepping things in sync. ComfyUI typecking is very strict.*  
 This is why there are so many nodes in the `converter` category.
+
+## To Do
+- [ ] Improve Docs 
+- [ ] Add `Edit Message Video` Node
+- [ ] Add `Edit Message Audio` Node
+- [ ] Wait for feedback to update the Todo list
