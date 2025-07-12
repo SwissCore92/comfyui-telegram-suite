@@ -1,0 +1,13 @@
+[project]
+name = "comfyui-telegram-suite"
+description = "Implement Telegram into your ComfyUI workflows."
+version = "1.0.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/SwissCore92/comfyui-telegram-suite"
+
+[tool.comfy]
+PublisherId = "swisscore-py"
+DisplayName = "ComfyUI Telegram Suite"
+Icon = ""
