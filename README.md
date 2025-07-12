@@ -84,13 +84,13 @@ Add your bot(s) and chat(s) to the config file.
 * Add your *chat ID(s)* under `"chats"`.  
 
 Example:
-```python
+```json
 {
     "bots": {
         "MyCoolBot": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
         "MyOtherCoolBot": "654321:CBA-DEF1234ghIkl-zyx57W2v1u123ew11"
     },
-    "chats" {
+    "chats": {
         "MyPrivateChat": 567891234,
         "MyGroupChat": -1012345678
     }
