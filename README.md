@@ -6,48 +6,48 @@
 
 ## Nodes
 
+<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/main_nodes.png" alt="main_nodes">
+
 <details><summary>Telegram Bot
 </summary>
 This Node is to load a Bot and an optional default chat.   
 
 You can configure this in `ComfyUI/user/default/telegram-suite/config.json`.
-
----
 </details>
 
 <details><summary>Send Message
 </summary>
-This Node is to send a text message.
+This Node is to send a text message. 
 
----
+Nothing special to say about this node.
 </details>
 
 <details><summary>Send Image(s)
 </summary>
-This Node is to send Images.
+This Node is to send one or multiple Images.  
 
+If the `IMAGE` input contains multiple images and `group` is set to True, the images are sent as media group. Else, the images are sent one by one.  
 
----
+If `send_as_file` is True, the image(s) will be sent as file(s).
+
+**Note:**  
+*If multiple messages are sent, only the `message(_id)` of the **last** sent message wil be returned to the output.*
 </details>
 
 <details><summary>Send Video
 </summary>
-Test
+This Node is to send a video. 
 </details>
 
 <details><summary>Send Audio
 </summary>
-Test
+This Node is to send an audio. 
 </details>
 
 <details><summary>Send Chat Action
 </summary>
-Test
+This Node is to send chat actions. 
 </details>
-
->**Note:**  
->The optional `trigger` inputs and outputs are there to force things to happen in the order you want.  
-
 
 ## Installation
 
@@ -90,4 +90,14 @@ Restart ComfyUI again.
 Have fun!
 
 ## Triggers
-<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/trigger_example_tts.png">
+
+The optional `trigger` inputs and outputs are there to force things to happen in the order you want. 
+
+Here is an Example of a F5-TTS workflow sending the Chat Action *recoring_voice* to the chat, before the TTS Node starts to generate ("record") the audio. After the F5-TTS node is done, the Audio will be sent to the chat. 
+
+<img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/trigger_example_tts.png" alt="trigger_example_tts">
+
+You can use almost any type as Trigger. The downside is that the signal must be converted to `ANY` before going into the `trigger` input and back to the original type after coming out from the `trigger` output (See example above using an `INT` signal as trigger - the seed).  
+*I know this is a little bit clunky but I could not figure out another way to enforce kepping things in sync.*  
+This is why there are so many nodes in the `converter` category.
+
