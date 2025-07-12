@@ -17,6 +17,8 @@ NODE_CLASS_MAPPINGS = {
         "EditMessageText": telegram.EditMessageText,
         "EditMessageCaption": telegram.EditMessageCaption,
         "EditMessageImage": telegram.EditMessageImage,
+        "EditMessageVideo": telegram.EditMessageVideo,
+        "EditMessageAudio": telegram.EditMessageAudio,
 
         "ParseJSON": utils.ParseJSON,
         
@@ -37,6 +39,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
         "EditMessageText": "Edit Message Text",
         "EditMessageCaption": "Edit Message Caption",
         "EditMessageImage": "Edit Message Image",
+        "EditMessageVideo": "Edit Message Video",
+        "EditMessageAudio": "Edit Message Audio",
 
         "ParseJSON": "Parse JSON",
 

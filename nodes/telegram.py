@@ -1,7 +1,6 @@
 import json
 import logging
 import mimetypes
-import shutil 
 
 import httpx
 from colorama import Fore
@@ -14,7 +13,6 @@ logger = logging.getLogger("httpx").setLevel(logging.CRITICAL)
 debug = True
 
 _CATEGORY = "Telegram Suite 🔽"
-
 
 config = utils.load_config()
 
@@ -274,7 +272,6 @@ class SendVideo(SendGeneric):
         
         return message, message["message_id"], trigger
 
-
 class SendAudio(SendGeneric):
     @classmethod
     def INPUT_TYPES(cls):
@@ -378,7 +375,6 @@ class EditMessageCaption(SendGeneric):
 
         return message, message["message_id"], trigger
 
-
 class EditMessageImage(SendGeneric):
     @classmethod
     def INPUT_TYPES(cls):
@@ -393,6 +389,7 @@ class EditMessageImage(SendGeneric):
                 "show_caption_above_media": ("BOOLEAN", {"default": False}),
                 "file_name": ("STRING", {"default": "image"}),
                 "format": (["PNG", "WEBP", "JPG"], {}),
+                "as_file": ("BOOLEAN", {"default": False}),
             },
             "optional": {
                 "trigger": ("*", {"forceInput": True})
@@ -402,7 +399,7 @@ class EditMessageImage(SendGeneric):
     CATEGORY = f"{_CATEGORY}/edit"
     FUNCTION = "edit_message_image"
 
-    def edit_message_image(self, bot: TelegramBot, IMAGE, file_name, format, trigger=None, **params):
+    def edit_message_image(self, bot: TelegramBot, IMAGE, file_name, format,  as_file, trigger=None, **params):
         if params["parse_mode"] == "None":
             params.pop("parse_mode")
         
@@ -410,8 +407,9 @@ class EditMessageImage(SendGeneric):
         
         _params = {
             "chat_id": params["chat_id"],
+            "message_id": params["message_id"],
             "media": {k: v for k, v in {
-                "type": "photo",
+                "type": "document" if as_file else "photo",
                 "media": "attach://media",
                 "caption": params.get("caption"),
                 "parse_mode": params.get("parse_mode"),
@@ -427,6 +425,109 @@ class EditMessageImage(SendGeneric):
 
         return message, message["message_id"], trigger
 
+class EditMessageVideo(SendGeneric):
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
+                "chat_id": ("INT", {"forceInput": True}),
+                "message_id": ("INT", {"forceInput": True}),
+                "video": ("VHS_FILENAMES", {"forceInput": True}),
+                "caption": ("STRING", {"multiline": True, "default": ""}),
+                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
+                "show_caption_above_media": ("BOOLEAN", {"default": False}),
+                "send_as": (["Animation", "Video", "File"], {}),
+            },
+            "optional": {
+                "trigger": ("*", {"forceInput": True})
+            }
+        }
+    
+    CATEGORY = f"{_CATEGORY}/edit"
+    FUNCTION = "edit_message_video"
+
+    def edit_message_video(self, bot: TelegramBot, video, send_as, trigger=None, **params):
+        if params["parse_mode"] == "None":
+            params.pop("parse_mode")
+
+        file_path = [v for v in video[1] if not v.endswith(".png")][0]
+        file_name = file_path.rsplit("/", 1)[-1]
+
+        if send_as == "File":
+            send_as = "Document"
+
+        id = send_as.lower()
+        
+        _params = {
+            "chat_id": params["chat_id"],
+            "message_id": params["message_id"],
+            "media": {k: v for k, v in {
+                "type": id,
+                "media": "attach://media",
+                "caption": params.get("caption"),
+                "parse_mode": params.get("parse_mode"),
+                "show_caption_above_media": params.get("show_caption_above_media")
+            }.items() if v}
+        }
+
+        with open(file_path, "rb") as f:
+            files = {"media": (file_name, f.read(), utils.guess_mimetype(file_name))}
+            message = bot("editMessageMedia", params=_params, files=files)
+            return message, message["message_id"], trigger
+
+class EditMessageAudio(SendGeneric):
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
+                "chat_id": ("INT", {"forceInput": True}),
+                "message_id": ("INT", {"forceInput": True}),
+                "audio": ("AUDIO", {"forceInput": True}),
+                "caption": ("STRING", {"multiline": True, "default": ""}),
+                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
+                "show_caption_above_media": ("BOOLEAN", {"default": False}),
+                "file_name": ("STRING", {"default": "image"}),
+                "as_file": ("BOOLEAN", {"default": False}),
+            },
+            "optional": {
+                "trigger": ("*", {"forceInput": True})
+            }
+        }
+    
+    CATEGORY = f"{_CATEGORY}/edit"
+    FUNCTION = "edit_message_audio"
+
+    def edit_message_audio(self, bot: TelegramBot, audio, file_name, as_file, trigger=None, **params):
+        if params["parse_mode"] == "None":
+            params.pop("parse_mode")
+        
+        ext = "wav" if as_file else "mp3"
+        
+        name = f"{file_name}.{ext}"
+
+        _params = {
+            "chat_id": params["chat_id"],
+            "message_id": params["message_id"],
+            "media": {k: v for k, v in {
+                "type": "document" if as_file else "audio",
+                "media": "attach://media",
+                "caption": params.get("caption"),
+                "parse_mode": params.get("parse_mode"),
+                "show_caption_above_media": params.get("show_caption_above_media")
+            }.items() if v}
+        }
+
+        b = utils.audio_to_wav_bytes(audio)
+        if not as_file:
+            b = utils.convert_wav_bytes_ffmpeg(b)
+
+        files = {"media": (name, b, utils.guess_mimetype(name))}
+
+        message = bot("editMessageMedia", params=_params, files=files)
+
+        return message, message["message_id"], trigger
 
 class SendChatAction:
     @classmethod

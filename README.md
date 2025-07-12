@@ -39,7 +39,7 @@ If `send_as_file` is True, the image(s) will be sent as file(s).
 </summary>
 This Node is to send a video.  
 
-The `video` input expects the `Filenames` outupt of the `Video Combine` node (Video Helper Suite) as input.
+The `video` input expects a `VHS_FILENAMES` type (The `Filenames` outupt of the `Video Combine` node (Video Helper Suite)).
 
 The video can be sent as video, animation or file.
 </details>
@@ -120,6 +120,6 @@ This is why there are so many nodes in the `converter` category.
 
 ## To Do
 - [ ] Improve Docs 
-- [ ] Add `Edit Message Video` Node
-- [ ] Add `Edit Message Audio` Node
+- [x] Add `Edit Message Video` Node
+- [x] Add `Edit Message Audio` Node
 - [ ] Wait for feedback to update the Todo list
