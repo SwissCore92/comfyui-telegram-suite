@@ -2,6 +2,8 @@
 
 **Implement Telegram into your ComfyUI workflows.**
 
+
+
 ## Nodes
 
 The main nodes:  
@@ -56,7 +58,7 @@ This Node is to send chat actions.
 Note: This is **no output node**.
 </details>
 
-There are also some experimental nodes, some nodes to edit messages and a lot of converter nodes (see [Triggers](#triggers)).
+There are also some nodes to edit messages, some experimental nodes and a lot of converter nodes (see [Triggers](#triggers)).
 
 ## Installation
 
@@ -64,7 +66,7 @@ There are also some experimental nodes, some nodes to edit messages and a lot of
 
 ### Step 1:
 
-Install via `ComfyUI Manager` (and skip **Step 1**) or execute the following commands:
+Install via `ComfyUI Manager` (and skip to [Step 2](#step-2)) or execute the following commands:
 
 >⚠️ Make sure your ComfyUI virtual environment is activated and you are in the ComfyUI/custom_nodes directory!
 
@@ -75,14 +77,14 @@ pip install -r requirements.txt
 ```
 
 ### Step 2: 
-Restart ComfyUI
+Restart ComfyUI.
 
 ### Step 3: 
 Add your bot(s) and chat(s) to the config file. 
 
 * Open the `ComfyUI/user/default/telegram-suite/config.json` file.  
-* Add your bot token(s) to `"bots"`.  
-* Add your chat id(s) to `"chats"`.  
+* Add your *bot token(s)* to `"bots"`.  
+* Add your *chat id(s)* to `"chats"`.  
 
 The file should look something like this:
 ```python
@@ -97,8 +99,8 @@ The file should look something like this:
     }
 }
 ```
-> You can use any String as key value for both "bots" and "chats".  
-Just use a name you can recognize. I like to use the telegram `username`.
+> You can use any String as key value for both `"bots"` and `"chats"`.  
+Just use a name you can recognize. I like to use the telegram @`username`.
 
 ### Step 4:
 Restart ComfyUI again. -> Have fun!
