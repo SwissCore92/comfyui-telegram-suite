@@ -51,8 +51,9 @@ This node sends an audio file.
 
 <details><summary>Send Chat Action
 </summary>
-This node sends chat actions like “typing,” “uploading,” or “recording.”  
-⚠️ This is not an output node.
+This node sends chat actions like “typing...”, “uploading X...”, or “recording X...”.  
+
+⚠️ This is not an output node, so the trigger passthrough **is required** for this node to work.
 </details>
 
 Additional nodes include message editing, experimental features, and various type converters (see [Triggers](#triggers)).
