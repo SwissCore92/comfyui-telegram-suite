@@ -11,7 +11,7 @@ The main nodes:
 
 <details><summary>Telegram Bot
 </summary>
-This node loads your Telegram bot and (optionally) sets a default chat.  
+This node loads your Telegram bot and (optionally) sets a default chat. 
 
 You can configure it via: `ComfyUI/user/default/telegram-suite/config.json`
 </details>
@@ -37,7 +37,7 @@ This node sends one or more (up to 10) images.
 </summary>
 This node sends a video file.
 
-* The video input must be of type `VHS_FILENAMES` (e.g., from the `Filenames` output of the ***Video Combine*** node in the ***Video Helper Suite***).
+* The video input must be of type `VHS_FILENAMES` (e.g., from the `Filenames` output of the ***Video Combine*** node in the [Video Helper Suite](https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite)).
 
 The video can be sent as a regular video, an animation, or a file.
 </details>
@@ -108,11 +108,11 @@ The optional `trigger` inputs/outputs are used to enforce execution order in you
 
 ComfyUI runs by evaluating output nodes and working backward to resolve dependencies. I like to think of it as the inputs "pulling" the values they need from connected outputs.
 
-The trigger passthrough ensures a node executes at a specific point during the workflow. Here's an example using F5-TTS:
+The trigger passthrough ensures a node executes at a specific point during the workflow. Here's an example using [F5-TTS](https://github.com/niknah/ComfyUI-F5-TTS):
 
 <img src="https://github.com/SwissCore92/comfyui-telegram-suite/blob/master/screenshots/trigger_example_tts.png" alt="screenshots/trigger_example_tts.png">
 
-This flow sends the `recording_voice` chat action before generating the audio with the F5-TTS node. Once audio is generated, it's sent to the chat.
+This flow sends the `recording_voice` chat action before generating the audio with the [F5-TTS](https://github.com/niknah/ComfyUI-F5-TTS) node. Once audio is generated, it's sent to the chat.
 
 > The seed is required by the `F5-TTS Audio` node, so the `Send Chat Action` node ***must*** execute first.
 
@@ -127,4 +127,5 @@ You can use almost any type as a trigger. However, since ComfyUI has strict type
 - [ ] Improve documentation 
 - [x] Add `Edit Message Video` node
 - [x] Add `Edit Message Audio` node
+- [ ] Add tooltips and descriptions.
 - [ ] Wait for feedback to refine this list

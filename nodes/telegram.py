@@ -164,7 +164,8 @@ class SendImage(SendGeneric):
         if len(images_bytes) == 1:
             # Single Image
             params[id] = f"attach://{id}"
-            file_name = f"{file_name or "image"}.{format.lower()}"
+            file_name = file_name or "image"
+            file_name = f"{file_name}.{format.lower()}"
             message = bot(
                 "sendDocument" if send_as_file else "sendPhoto", 
                 params=params, 
@@ -177,8 +178,9 @@ class SendImage(SendGeneric):
                 # Multiple images - send as media group
                 media = []
                 files = {}
+                file_name = file_name or "image"
                 for i, b in enumerate(images_bytes):
-                    name = f"{file_name or "image"}{i}.{format.lower()}"
+                    name = f"{file_name}{i}.{format.lower()}"
                     files[f"{id}{i}"] = (name, b, utils.guess_mimetype(name))
 
                     m = {
@@ -304,7 +306,9 @@ class SendAudio(SendGeneric):
 
         wav_bytes = utils.audio_to_wav_bytes(audio)
 
-        name = f"{file_name or "audio"}.{format}"
+        file_name = file_name or "audio"
+
+        name = f"{file_name}.{format}"
 
         if send_as == "File":
             params["document"] = "attach://document"
@@ -564,4 +568,7 @@ class SendChatAction:
     def send_chat_action(self, bot: TelegramBot, trigger=None, **params):
         result = bot("sendChatAction", params=params)
         return result, trigger
+    
+    def get_return_types(self, trigger_type, **kwargs):
+        return ("BOOL", trigger_type)
 
