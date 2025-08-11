@@ -534,6 +534,11 @@ class EditMessageAudio(SendGeneric):
         return message, message["message_id"], trigger
 
 class SendChatAction:
+    # force re-running
+    @classmethod
+    def IS_CHANGED(cls):
+        return float("nan")
+    
     @classmethod
     def INPUT_TYPES(cls):
         return {
