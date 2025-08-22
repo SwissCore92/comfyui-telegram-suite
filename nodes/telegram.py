@@ -163,6 +163,7 @@ class SendImage(SendGeneric):
 
         if len(images_bytes) == 1:
             # Single Image
+            image_bytes = images_bytes[0]
             params[id] = f"attach://{id}"
             file_name = file_name or "image"
             file_name = f"{file_name}.{format.lower()}"
