@@ -1,6 +1,7 @@
 import json
 import logging
 import mimetypes
+from typing import Any
 
 import httpx
 from colorama import Fore
@@ -67,6 +68,11 @@ class TelegramBot:
 
 class APIMethod:
     OUTPUT_NODE = True
+
+    # force re-running
+    @classmethod
+    def IS_CHANGED(cls):
+        return float("nan")
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -184,16 +190,16 @@ class SendImage(SendGeneric):
                     name = f"{file_name}{i}.{format.lower()}"
                     files[f"{id}{i}"] = (name, b, utils.guess_mimetype(name))
 
-                    m = {
+                    m: dict[str, Any] = {
                         "type": "document" if send_as_file else "photo", 
                         "media": f"attach://{id}{i}",
                     }
                     if params.get("caption"):
-                        m["caption"] = params.get("caption"), 
+                        m["caption"] = params["caption"]
                     if params.get("parse_mode", "None") != "None":
-                        m["parse_mode"] = params.get("parse_mode")
+                        m["parse_mode"] = params["parse_mode"]
                     if id != "document":
-                        m["show_caption_above_media"] = params["show_caption_above_media"] or None,
+                        m["show_caption_above_media"] = (params["show_caption_above_media"] or None)
 
                     media.append(m)
 
