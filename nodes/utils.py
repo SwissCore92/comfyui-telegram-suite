@@ -3,7 +3,7 @@ import os
 import mimetypes
 import json
 import subprocess
-from typing import Any, TypedDict
+from typing import TypedDict, Any
 from pathlib import Path
 
 import torchaudio
@@ -50,7 +50,6 @@ def cleanup_params(params: dict[str, Any]) -> dict[str, Any]:
         params.pop("message_thread_id")
 
     return params
-
 
 def read_json(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
@@ -112,3 +111,22 @@ def convert_wav_bytes_ffmpeg(input_bytes: bytes, output_format: str = "mp3") -> 
         raise RuntimeError(f"ffmpeg audio conversion failed: {result.stderr.decode()}")
 
     return result.stdout
+
+class ParseJSON:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "json_string": ("STRING", {"multiline": True}),
+            },
+        }
+
+    RETURN_TYPES = ("DICT",)
+    RETURN_NAMES = ("DICT",)
+
+    FUNCTION = "parse_json"
+    CATEGORY = _CATEGORY
+    
+    def parse_json(self, json_string):
+        return (json.loads(json_string),)
+
