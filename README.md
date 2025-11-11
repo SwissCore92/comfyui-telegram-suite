@@ -52,8 +52,6 @@ This node sends an audio file.
 <details><summary>Send Chat Action
 </summary>
 This node sends chat actions like “typing...”, “uploading X...”, or “recording X...”.  
-
-⚠️ This is not an output node, so the trigger passthrough **is required** for this node to work.
 </details>
 
 Additional nodes include message editing, experimental features, and various type converters (see [Triggers](#triggers)).
@@ -128,4 +126,5 @@ You can use almost any type as a trigger. However, since ComfyUI has strict type
 - [x] Add `Edit Message Video` node
 - [x] Add `Edit Message Audio` node
 - [ ] Add tooltips and descriptions.
+
 - [ ] Wait for feedback to refine this list
