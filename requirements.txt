@@ -2,3 +2,4 @@ colorama
 httpx
 numpy
 pillow
+torchaudio
