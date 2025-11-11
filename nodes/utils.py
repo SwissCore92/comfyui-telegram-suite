@@ -3,10 +3,10 @@ import os
 import mimetypes
 import json
 import subprocess
-import torchaudio
-from typing import TypedDict
+from typing import Any, TypedDict
 from pathlib import Path
 
+import torchaudio
 import numpy as np
 from PIL import Image
 
@@ -37,9 +37,20 @@ def load_config() -> Config:
         }
         write_json(config_path, cfg)
         print(f"You need to add a bot to the config file at {config_path}.")
-        return cfg
+        return cfg # type: ignore
         
-    return read_json(config_path)
+    return read_json(config_path) # type: ignore
+
+
+def cleanup_params(params: dict[str, Any]) -> dict[str, Any]:
+    if params.get("parse_mode") == "None":
+        params.pop("parse_mode")
+
+    if params.get("message_thread_id") and params["message_thread_id"] < 0:
+        params.pop("message_thread_id")
+
+    return params
+
 
 def read_json(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
@@ -73,7 +84,7 @@ def audio_to_wav_bytes(audio, format="WAV") -> bytes:
     sample_rate = audio.get("sample_rate", 44100)
 
     buf = io.BytesIO()
-    torchaudio.save(buf, waveform, sample_rate, format="wav")
+    torchaudio.save(buf, waveform, sample_rate, format="wav") # type: ignore
     buf.seek(0)
     b = buf.getvalue()
     buf.close()
@@ -85,7 +96,8 @@ def convert_wav_bytes_ffmpeg(input_bytes: bytes, output_format: str = "mp3") -> 
         "-y",  
         "-f", "wav", 
         "-i", "pipe:0", 
-        "-f", output_format, 
+        # "-f", output_format, 
+        "-f", "opus" if output_format == "ogg" else output_format, #TODO: test (using libopus)
         "pipe:1"
     ]
 
@@ -97,25 +109,6 @@ def convert_wav_bytes_ffmpeg(input_bytes: bytes, output_format: str = "mp3") -> 
     )
 
     if result.returncode != 0:
-        raise RuntimeError(f"FFmpeg failed: {result.stderr.decode()}")
+        raise RuntimeError(f"ffmpeg audio conversion failed: {result.stderr.decode()}")
 
     return result.stdout
-
-class ParseJSON:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "json_string": ("STRING", {"multiline": True}),
-            },
-        }
-
-    RETURN_TYPES = ("DICT",)
-    RETURN_NAMES = ("DICT",)
-
-    FUNCTION = "parse_json"
-    CATEGORY = _CATEGORY
-    
-    def parse_json(json_string):
-        return (json.loads(json_string),)
-
