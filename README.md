@@ -125,6 +125,7 @@ You can use almost any type as a trigger. However, since ComfyUI has strict type
 - [ ] Improve documentation 
 - [x] Add `Edit Message Video` node
 - [x] Add `Edit Message Audio` node
+- [ ] Add Forum/Topics support
 - [ ] Add tooltips and descriptions.
 
 - [ ] Wait for feedback to refine this list
