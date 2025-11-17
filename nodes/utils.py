@@ -3,7 +3,7 @@ import os
 import mimetypes
 import json
 import subprocess
-from typing import TypedDict, Any
+from typing import NotRequired, TypedDict, Any
 from pathlib import Path
 
 import torchaudio
@@ -17,9 +17,15 @@ USER_DIR = Path(os.getcwd()) / "user" / "default"
 
 _CATEGORY = "Telegram Suite 🔽/experimental"
 
+class Chat(TypedDict):
+    chat_id: int
+    topics: NotRequired[dict[str, int]]
+
 class Config(TypedDict):
     bots: dict[str, str]
-    chats: dict[str, int]
+    chats: dict[str, int | Chat]
+    api_url: NotRequired[str]
+
 
 def load_config() -> Config:
     tg_dir = USER_DIR / "telegram-suite"
@@ -36,11 +42,14 @@ def load_config() -> Config:
             }
         }
         write_json(config_path, cfg)
-        print(f"You need to add a bot to the config file at {config_path}.")
+        log(f"You need to add a bot to the config file at {config_path}.")
         return cfg # type: ignore
-        
+    
+    log("Reading config")
     return read_json(config_path) # type: ignore
 
+def log(message: str) -> None:
+    print(f"[Telegram Suite 🔽]: {message}")
 
 def cleanup_params(params: dict[str, Any]) -> dict[str, Any]:
     if params.get("parse_mode") == "None":

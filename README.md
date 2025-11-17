@@ -1,8 +1,10 @@
 # ComfyUI Telegram Suite
 
+![version](https://img.shields.io/badge/version-1.0.4-00aaff?style=for-the-badge)
+
 **Implement Telegram into your ComfyUI workflows.**
 
-
+[Changelog](CHANGELOG.md)
 
 ## Nodes
 
@@ -11,7 +13,7 @@ The main nodes:
 
 <details><summary>Telegram Bot
 </summary>
-This node loads your Telegram bot and (optionally) sets a default chat. 
+This node loads your Telegram bot and (optionaly) sets a default chat. 
 
 You can configure it via: `ComfyUI/user/default/telegram-suite/config.json`
 </details>
@@ -81,6 +83,7 @@ Add your bot(s) and chat(s) to the config file.
 * Open: `ComfyUI/user/default/telegram-suite/config.json`.  
 * Add your *bot token(s)* under `"bots"`.  
 * Add your *chat ID(s)* under `"chats"`.  
+* **(Optional)** Add your own *telegram bot api url* under `"api_url"`.
 
 Example:
 ```json
@@ -92,7 +95,8 @@ Example:
     "chats": {
         "MyPrivateChat": 567891234,
         "MyGroupChat": -1012345678
-    }
+    },
+    "api_url": "https://localhost:8081"
 }
 ```
 > Use any string as the key for `"bots"` and "`chats"` — I like to use the Telegram @`username` for clarity.
@@ -116,16 +120,19 @@ This flow sends the `recording_voice` chat action before generating the audio wi
 
 You can use almost any type as a trigger. However, since ComfyUI has strict type checking, you'll need to:
 
-* Convert the signal to ANY before feeding it into the trigger input.
+* ~~Convert the signal to ANY before feeding it into the trigger input.~~  
+This step is no longer required. You can feed the trigger signal directly into the node now.
 * Convert it back to the original type after the trigger output.
 
 *Yes, it's a bit clunky — but it’s the only reliable way I’ve found to control execution order. That’s also why the `converter` category has so many nodes.*
+
+If you have Ideas how to solve the problem in a more elegant way, feel free to open a PR.
 
 ## To Do
 - [ ] Improve documentation 
 - [x] Add `Edit Message Video` node
 - [x] Add `Edit Message Audio` node
-- [ ] Add Forum/Topics support
-- [ ] Add tooltips and descriptions.
+- [x] Add Forum/Topics support
+- [x] Add tooltips and descriptions.
 
 - [ ] Wait for feedback to refine this list

@@ -7,6 +7,7 @@ import httpx
 from colorama import Fore
 
 from . import utils
+from . import inputs
 
 # prevent httpx from logging the token
 logger = logging.getLogger("httpx").setLevel(logging.CRITICAL)
@@ -14,6 +15,7 @@ logger = logging.getLogger("httpx").setLevel(logging.CRITICAL)
 debug = True
 
 _CATEGORY = "Telegram Suite 🔽"
+DEFAULT_API_URL = "https://api.telegram.org"
 
 config = utils.load_config()
 
@@ -22,12 +24,28 @@ class TelegramException(Exception): ...
 class TelegramBot:
     @classmethod
     def INPUT_TYPES(cls):
+        api_urls = [DEFAULT_API_URL]
+
+        if url := config.get("api_url"):
+            api_urls = [url, *api_urls]
+
         return {
             "required": {
-                "bot": (list(config["bots"].keys()), {}),
+                "bot": (list(config.get("bots", {}).keys()), {
+                    "tooltip": "Select your telegram bot.\n"
+                    f"{utils.USER_DIR}/telegram-suite/config.json"
+                }),
             },
             "optional": {
-                "chat": (list(config["chats"].keys()), {}),
+                "chat": (list(config.get("chats", {}).keys()), {
+                    "tooltip": "Select your telegram chat.\n"
+                    f"{utils.USER_DIR}/telegram-suite/config.json"
+                }),
+                "api_url": (api_urls, {
+                    "tooltip": "The api url to use if you are using your own telegram bot api server.\n"
+                    f"{utils.USER_DIR}/telegram-suite/config.json\n"
+                    "Eg. 'api_url': 'http://localhost:8081'"
+                })
             }
         }
     
@@ -37,14 +55,29 @@ class TelegramBot:
     FUNCTION = "init_telegram_bot"
     CATEGORY = _CATEGORY
 
-    def init_telegram_bot(self, bot: str, chat=None):
-        token = config["bots"][bot]
+    @classmethod
+    def IS_CHANGED(cls, *args, **kwargs):
+        return float("nan")
 
-        self.session = httpx.Client(
-            base_url=f"https://api.telegram.org/bot{token}/",
-        )
+    def init_telegram_bot(self, bot: str, chat=None, api_url="default"):
+        token = config["bots"].get(bot)
 
-        return (self, 0 if chat is None else config["chats"][chat])
+        if not token:
+            raise ValueError(f"Telegram bot token of bot '{bot}' was not found in {utils.USER_DIR}/telegram-suite/config.json")
+
+        self.base_url = f"{api_url}/bot{token}"
+
+        target_chat: int | dict = config["chats"].get(chat, 0) # type: ignore
+
+        # TODO: maybe implement topics in config (needs dynamic changing of the node)
+        topics = {}
+        if isinstance(target_chat, dict):
+            chat_id = target_chat["chat_id"]
+            topics = target_chat.get("topics", {})
+        else:
+            chat_id = target_chat
+
+        return (self, chat_id)
 
     def __call__(self, method_name: str, params: dict | None = None, files: dict | None = None):
         params = {
@@ -54,36 +87,37 @@ class TelegramBot:
             if v # is not None
         } if params else None
 
-        result = self.session.post(method_name, data=params or None, files=files or None).json()
+        result = httpx.post(f"{self.base_url}/{method_name}", data=params or None, files=files or None).json()
 
         if not result["ok"]:
             if debug:
                 f = {k: (v[0], "<file_bytes>", v[2]) for k, v in files.items()} if files else None
-                print(f"[TELEGRAM SUITE]: {method_name}({params=}, files={f}) -> {result}")
+                utils.log(f"{method_name}({params=}, files={f}) -> {result}")
 
             raise TelegramException(f"'{method_name}' was unsuccessful: ", result)
-        
-        print(f"[TELEGRAM SUITE]: {method_name}(...) -> OK")
+
+        else:
+            utils.log(f"{method_name}(...) -> OK")
+
         return result["result"]
 
 class APIMethod:
     OUTPUT_NODE = True
 
-    # force re-running
     @classmethod
-    def IS_CHANGED(cls):
+    def IS_CHANGED(cls, *args, **kwargs):
         return float("nan")
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "method_name": ("STRING", {"default": "sendMessage"}),
+                "bot": inputs.bot,
+                "method_name": inputs.method_name,
             },
             "optional": {
-                "chat_id": ("INT", {"forceInput": True}),
-                "params": ("DICT", {"default": {}})
+                "chat_id": inputs.chat_id,
+                "params": inputs.params
             }
         }
      
@@ -107,28 +141,36 @@ class SendGeneric:
 
     CATEGORY = _CATEGORY
 
+    @classmethod
+    def IS_CHANGED(cls, *args, **kwargs):
+        return float("nan")
+    
+    @classmethod
+    def VALIDATE_INPUTS(cls, input_types):
+        return True
+
 class SendMessage(SendGeneric):
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "text": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "disable_notification": ("BOOLEAN", {"default": True}),
-                "protect_content": ("BOOLEAN", {"default": False}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "text": inputs.text,
+                "parse_mode": inputs.parse_mode,
+                "disable_notification": inputs.disable_notification,
+                "protect_content": inputs.protect_content,
+                "message_thread_id": inputs.message_thread_id
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger,
             }
         }
 
     FUNCTION = "send_message"
 
     def send_message(self, bot: TelegramBot, trigger=None, **params):
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
         
         message = bot("sendMessage", params=params)
 
@@ -139,21 +181,23 @@ class SendImage(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "IMAGE": ("IMAGE", {"forceInput": True}),
-                "caption": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "show_caption_above_media": ("BOOLEAN", {"default": False}),
-                "disable_notification": ("BOOLEAN", {"default": True}),
-                "protect_content": ("BOOLEAN", {"default": False}),
-                "group": ("BOOLEAN", {"default": True}),
-                "send_as_file": ("BOOLEAN", {"default": False}),
-                "file_name": ("STRING", {"default": "image"}),
-                "format": (["PNG", "WEBP", "JPG"], {}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "IMAGE": inputs.image,
+                "caption": inputs.caption,
+                "parse_mode": inputs.parse_mode,
+                "show_caption_above_media": inputs.show_caption_above_media,
+                "has_spoiler": inputs.has_spoiler,
+                "disable_notification": inputs.disable_notification,
+                "protect_content": inputs.protect_content,
+                "group": inputs.group,
+                "send_as_file": inputs.send_as_file,
+                "file_name": inputs.file_name("image"),
+                "format": inputs.image_formats,
+                "message_thread_id": inputs.message_thread_id,
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
 
@@ -162,8 +206,7 @@ class SendImage(SendGeneric):
     def send_photo(self, bot: TelegramBot, IMAGE, group, send_as_file, file_name, format, trigger=None, **params):
         id = "document" if send_as_file else "photo"
 
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
 
         images_bytes = utils.images_to_bytes(IMAGE, format)
 
@@ -239,26 +282,27 @@ class SendVideo(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "video": ("VHS_FILENAMES", {"forceInput": True}),
-                "caption": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "show_caption_above_media": ("BOOLEAN", {"default": False}),
-                "disable_notification": ("BOOLEAN", {"default": True}),
-                "protect_content": ("BOOLEAN", {"default": False}),
-                "send_as": (["Animation", "Video", "File"], {}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "video": inputs.video,
+                "caption": inputs.caption,
+                "parse_mode": inputs.parse_mode,
+                "show_caption_above_media": inputs.show_caption_above_media,
+                "has_spoiler": inputs.has_spoiler,
+                "disable_notification": inputs.disable_notification,
+                "protect_content": inputs.protect_content,
+                "send_as": inputs.send_video_as,
+                "message_thread_id": inputs.message_thread_id
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
 
     FUNCTION = "send_video"
 
     def send_video(self, bot: TelegramBot, video, send_as, trigger=None, **params):
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
         
         file_path = [v for v in video[1] if not v.endswith(".png")][0]
 
@@ -286,27 +330,28 @@ class SendAudio(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "audio": ("AUDIO", {"forceInput": True}),
-                "caption": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "show_caption_above_media": ("BOOLEAN", {"default": False}),
-                "disable_notification": ("BOOLEAN", {"default": True}),
-                "protect_content": ("BOOLEAN", {"default": False}),
-                "send_as": (["Voice", "Audio", "File"], {}),
-                "file_name": ("STRING", {"default": "audio"}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "audio": inputs.audio,
+                "caption": inputs.caption,
+                "parse_mode": inputs.parse_mode,
+                "show_caption_above_media": inputs.show_caption_above_media,
+                "disable_notification": inputs.disable_notification,
+                "protect_content": inputs.protect_content,
+                "send_as": inputs.send_audio_as,
+                "file_name": inputs.file_name("audio"),
+                "message_thread_id": inputs.message_thread_id
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
 
     FUNCTION = "send_audio"
 
     def send_audio(self, bot: TelegramBot, audio, send_as, file_name, trigger=None, **params):
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
+
         params["caption"] = params["caption"] or None
 
         format = "ogg" if send_as == "Voice" else "mp3" if send_as == "Audio" else "wav"
@@ -337,22 +382,21 @@ class EditMessageText(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "message_id": ("INT", {"forceInput": True}),
-                "text": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "message_id": inputs.message_id,
+                "text": inputs.text,
+                "parse_mode": inputs.parse_mode,
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
     CATEGORY = f"{_CATEGORY}/edit"
     FUNCTION = "edit_message_text"
 
     def edit_message_text(self, bot: TelegramBot, trigger=None, **params):
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
         
         message = bot("editMessageText", params=params)
 
@@ -363,12 +407,12 @@ class EditMessageCaption(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "message_id": ("INT", {"forceInput": True}),
-                "caption": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "show_caption_above_media": ("BOOLEAN", {"default": False}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "message_id": inputs.message_id,
+                "caption": inputs.caption,
+                "parse_mode": inputs.parse_mode,
+                "show_caption_above_media": inputs.show_caption_above_media,
             },
             "optional": {
                 "trigger": ("*", {"forceInput": True})
@@ -391,19 +435,19 @@ class EditMessageImage(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "message_id": ("INT", {"forceInput": True}),
-                "IMAGE": ("IMAGE", {"forceInput": True}),
-                "caption": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "show_caption_above_media": ("BOOLEAN", {"default": False}),
-                "file_name": ("STRING", {"default": "image"}),
-                "format": (["PNG", "WEBP", "JPG"], {}),
-                "as_file": ("BOOLEAN", {"default": False}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "message_id": inputs.message_id,
+                "IMAGE": inputs.image,
+                "caption": inputs.caption,
+                "parse_mode": inputs.parse_mode,
+                "show_caption_above_media": inputs.show_caption_above_media,
+                "file_name": inputs.file_name("image"),
+                "format": inputs.image_formats,
+                "as_file": inputs.send_as_file,
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
     
@@ -411,8 +455,7 @@ class EditMessageImage(SendGeneric):
     FUNCTION = "edit_message_image"
 
     def edit_message_image(self, bot: TelegramBot, IMAGE, file_name, format,  as_file, trigger=None, **params):
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
         
         name = f"{file_name}.{format.lower()}"
         
@@ -441,17 +484,17 @@ class EditMessageVideo(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "message_id": ("INT", {"forceInput": True}),
-                "video": ("VHS_FILENAMES", {"forceInput": True}),
-                "caption": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "show_caption_above_media": ("BOOLEAN", {"default": False}),
-                "send_as": (["Animation", "Video", "File"], {}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "message_id": inputs.message_id,
+                "video": inputs.video,
+                "caption": inputs.caption,
+                "parse_mode": inputs.parse_mode,
+                "show_caption_above_media": inputs.show_caption_above_media,
+                "send_as": inputs.send_video_as,
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
     
@@ -459,8 +502,7 @@ class EditMessageVideo(SendGeneric):
     FUNCTION = "edit_message_video"
 
     def edit_message_video(self, bot: TelegramBot, video, send_as, trigger=None, **params):
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
 
         file_path = [v for v in video[1] if not v.endswith(".png")][0]
         file_name = file_path.rsplit("/", 1)[-1]
@@ -492,18 +534,18 @@ class EditMessageAudio(SendGeneric):
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "message_id": ("INT", {"forceInput": True}),
-                "audio": ("AUDIO", {"forceInput": True}),
-                "caption": ("STRING", {"multiline": True, "default": ""}),
-                "parse_mode": (["None", "HTML", "Markdown", "MarkdownV2"], {}),
-                "show_caption_above_media": ("BOOLEAN", {"default": False}),
-                "file_name": ("STRING", {"default": "audio"}),
-                "as_file": ("BOOLEAN", {"default": False}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "message_id": inputs.message_id,
+                "audio": inputs.audio,
+                "caption": inputs.caption,
+                "parse_mode": inputs.parse_mode,
+                "show_caption_above_media": inputs.show_caption_above_media,
+                "file_name": inputs.file_name("audio"),
+                "as_file": inputs.send_as_file,
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
     
@@ -511,8 +553,7 @@ class EditMessageAudio(SendGeneric):
     FUNCTION = "edit_message_audio"
 
     def edit_message_audio(self, bot: TelegramBot, audio, file_name, as_file, trigger=None, **params):
-        if params["parse_mode"] == "None":
-            params.pop("parse_mode")
+        params = utils.cleanup_params(params)
         
         ext = "wav" if as_file else "mp3"
         
@@ -541,33 +582,21 @@ class EditMessageAudio(SendGeneric):
         return message, message["message_id"], trigger
 
 class SendChatAction:
-    # force re-running
     @classmethod
-    def IS_CHANGED(cls):
+    def IS_CHANGED(cls, *args, **kwargs):
         return float("nan")
     
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "bot": ("TELEGRAM_BOT", {"forceInput": True}),
-                "chat_id": ("INT", {"forceInput": True}),
-                "action": ([
-                    "typing",
-                    "upload_photo",
-                    "record_video",
-                    "upload_video",
-                    "record_voice",
-                    "upload_voice",
-                    "upload_document",
-                    "choose_sticker",
-                    "find_location",
-                    "record_video_note",
-                    "upload_video_note",
-                ], {}),
+                "bot": inputs.bot,
+                "chat_id": inputs.chat_id,
+                "action": inputs.chat_action,
+                "message_thread_id": inputs.message_id,
             },
             "optional": {
-                "trigger": ("*", {"forceInput": True})
+                "trigger": inputs.trigger
             }
         }
     
