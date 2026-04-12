@@ -304,7 +304,7 @@ class SendVideo(SendGeneric):
     def send_video(self, bot: TelegramBot, video, send_as, trigger=None, **params):
         params = utils.cleanup_params(params)
         
-        file_path = [v for v in video[1] if not v.endswith(".png")][0]
+        file_path = [v for v in video[1] if not v.endswith(".png")][-1]
 
         file_name = file_path.rsplit("/", 1)[-1]
         mimetype = mimetypes.guess_type(file_name)[0] or "application/octet_stream"
