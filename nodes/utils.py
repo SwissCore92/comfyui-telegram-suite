@@ -3,7 +3,17 @@ import os
 import mimetypes
 import json
 import subprocess
-from typing import NotRequired, TypedDict, Any
+from typing import TypedDict, Any
+
+try:
+    from typing import NotRequired
+except ImportError:
+    try:
+        from typing_extensions import NotRequired
+    except ImportError:
+        def NotRequired(x):
+            return x
+
 from pathlib import Path
 
 import torchaudio
