@@ -1,6 +1,7 @@
 import json
 import logging
 import mimetypes
+import time
 from typing import Any
 
 import httpx
@@ -19,9 +20,31 @@ DEFAULT_API_URL = "https://api.telegram.org"
 
 config = utils.load_config()
 
+DEFAULT_TIMEOUT_SECONDS = 60.0
+DEFAULT_CONNECT_TIMEOUT_SECONDS = 10.0
+DEFAULT_WRITE_TIMEOUT_SECONDS = 60.0
+DEFAULT_RETRIES = 2
+DEFAULT_RETRY_DELAY_SECONDS = 1.0
+
 class TelegramException(Exception): ...
 
 class TelegramBot:
+    def _sanitize_sensitive_text(self, text: str):
+        sanitized = text.replace(self.base_url, "<telegram_bot_api>")
+        return sanitized
+
+    def _sanitize_sensitive_payload(self, payload: Any):
+        if isinstance(payload, dict):
+            return {
+                k: ("<hidden>" if k == "chat_id" else self._sanitize_sensitive_payload(v))
+                for k, v in payload.items()
+            }
+        if isinstance(payload, list):
+            return [self._sanitize_sensitive_payload(v) for v in payload]
+        if isinstance(payload, str):
+            return self._sanitize_sensitive_text(payload)
+        return payload
+
     @classmethod
     def INPUT_TYPES(cls):
         api_urls = [DEFAULT_API_URL]
@@ -87,14 +110,48 @@ class TelegramBot:
             if v # is not None
         } if params else None
 
-        result = httpx.post(f"{self.base_url}/{method_name}", data=params or None, files=files or None).json()
+        retries = int(config.get("request_retries", DEFAULT_RETRIES))
+        retry_delay_seconds = float(config.get("request_retry_delay_seconds", DEFAULT_RETRY_DELAY_SECONDS))
+        timeout = httpx.Timeout(
+            timeout=float(config.get("request_timeout_seconds", DEFAULT_TIMEOUT_SECONDS)),
+            connect=float(config.get("request_connect_timeout_seconds", DEFAULT_CONNECT_TIMEOUT_SECONDS)),
+            write=float(config.get("request_write_timeout_seconds", DEFAULT_WRITE_TIMEOUT_SECONDS)),
+        )
+
+        for attempt in range(retries + 1):
+            try:
+                response = httpx.post(
+                    f"{self.base_url}/{method_name}",
+                    data=params or None,
+                    files=files or None,
+                    timeout=timeout,
+                )
+                response.raise_for_status()
+                result = response.json()
+                break
+            except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError, ValueError) as e:
+                if attempt >= retries:
+                    err = self._sanitize_sensitive_text(str(e))
+                    raise TelegramException(
+                        f"'{method_name}' request failed after {retries + 1} attempts: {type(e).__name__}: {err}"
+                    ) from e
+
+                utils.log(
+                    f"{method_name}: attempt {attempt + 1}/{retries + 1} failed with {type(e).__name__}; retrying in {retry_delay_seconds}s"
+                )
+                time.sleep(retry_delay_seconds * (attempt + 1))
 
         if not result["ok"]:
             if debug:
                 f = {k: (v[0], "<file_bytes>", v[2]) for k, v in files.items()} if files else None
-                utils.log(f"{method_name}({params=}, files={f}) -> {result}")
+                safe_params = self._sanitize_sensitive_payload(params)
+                safe_result = self._sanitize_sensitive_payload(result)
+                utils.log(f"{method_name}(params={safe_params}, files={f}) -> {safe_result}")
 
-            raise TelegramException(f"'{method_name}' was unsuccessful: ", result)
+            raise TelegramException(
+                f"'{method_name}' was unsuccessful: ",
+                self._sanitize_sensitive_payload(result)
+            )
 
         else:
             utils.log(f"{method_name}(...) -> OK")
