@@ -96,7 +96,7 @@ Example:
         "MyPrivateChat": 567891234,
         "MyGroupChat": -1012345678
     },
-    "api_url": "https://localhost:8081"
+    "api_url": "http://localhost:8081"
 }
 ```
 > Use any string as the key for `"bots"` and "`chats"` — I like to use the Telegram @`username` for clarity.
