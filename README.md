@@ -1,6 +1,6 @@
 # ComfyUI Telegram Suite
 
-![version](https://img.shields.io/badge/version-1.0.5-00aaff?style=for-the-badge)
+![version](https://img.shields.io/badge/version-1.0.6-00aaff?style=for-the-badge)
 
 **Implement Telegram into your ComfyUI workflows.**
 

@@ -11,3 +11,10 @@ The `<Type> To Any` nodes are still included for backward compatibility
 * Added `message_thread_id` option to some nodes
 * Telegram Bot now uses one-time sessions
 * Added tooltips to all node inputs 
+
+### Version 1.0.5
+* Merged https://github.com/SwissCore92/comfyui-telegram-suite/pull/5
+* Merged https://github.com/SwissCore92/comfyui-telegram-suite/pull/6
+
+### Version 1.0.6
+* Merged https://github.com/SwissCore92/comfyui-telegram-suite/pull/8
