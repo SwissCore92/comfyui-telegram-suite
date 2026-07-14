@@ -134,5 +134,6 @@ If you have Ideas how to solve the problem in a more elegant way, feel free to o
 - [x] Add `Edit Message Audio` node
 - [x] Add Forum/Topics support
 - [x] Add tooltips and descriptions.
+- [ ] Add Rich Message support.
 
 - [ ] Wait for feedback to refine this list
