@@ -18,3 +18,6 @@ The `<Type> To Any` nodes are still included for backward compatibility
 
 ### Version 1.0.6
 * Merged https://github.com/SwissCore92/comfyui-telegram-suite/pull/8
+
+### Version 1.0.7
+* Fixed sendAudio for python 3.14
