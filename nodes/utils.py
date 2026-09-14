@@ -3,6 +3,7 @@ import os
 import mimetypes
 import json
 import subprocess
+import wave
 from typing import TypedDict, Any
 
 try:
@@ -16,7 +17,7 @@ except ImportError:
 
 from pathlib import Path
 
-import torchaudio
+import torch
 import numpy as np
 from PIL import Image
 
@@ -95,18 +96,27 @@ def images_to_bytes(images, format="PNG") -> list[bytes]:
     return bytes_images
 
 def audio_to_wav_bytes(audio, format="WAV") -> bytes:
-    waveform = audio['waveform'].squeeze()
+    waveform = audio["waveform"].squeeze()
     if waveform.ndim == 1:
         waveform = waveform.unsqueeze(0)
 
     sample_rate = audio.get("sample_rate", 44100)
 
+    waveform = waveform.detach().cpu().clamp(-1.0, 1.0)
+    waveform = (waveform * 32767.0).to(torch.int16)
+
+    # [channels, samples] -> [samples, channels]
+    waveform = waveform.transpose(0, 1).numpy()
+
     buf = io.BytesIO()
-    torchaudio.save(buf, waveform, sample_rate, format="wav") # type: ignore
-    buf.seek(0)
-    b = buf.getvalue()
-    buf.close()
-    return b
+
+    with wave.open(buf, "wb") as wav:
+        wav.setnchannels(waveform.shape[1])
+        wav.setsampwidth(2)  # 16-bit PCM
+        wav.setframerate(sample_rate)
+        wav.writeframes(waveform.tobytes())
+
+    return buf.getvalue()
 
 def convert_wav_bytes_ffmpeg(input_bytes: bytes, output_format: str = "mp3") -> bytes:
     cmd = [
